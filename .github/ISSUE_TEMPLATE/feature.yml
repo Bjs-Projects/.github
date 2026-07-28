@@ -1,0 +1,57 @@
+name: Feature request
+description: Propose a concrete, testable improvement for one Bjs-Projects repository.
+title: "feature: "
+labels:
+  - type:feature
+  - status:ready
+body:
+  - type: input
+    id: repository
+    attributes:
+      label: Repository
+      description: Which Bjs-Projects repository should own this work?
+      placeholder: Bjs-Projects/example-repository
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem to solve
+      description: Describe the current limitation and who it affects.
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Required outcome
+      description: Describe observable acceptance criteria, not only an implementation idea.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope and constraints
+      description: Include platform, performance, compatibility, UX, data, or migration constraints.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Validation evidence required
+      description: State the tests, runtime/device checks, screenshots, or release evidence needed for acceptance.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Optional. Note simpler approaches or rejected trade-offs.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Submission checks
+      options:
+        - label: I searched existing issues and pull requests for the same request.
+          required: true
+        - label: The requested outcome is specific enough to verify.
+          required: true

@@ -1,7 +1,3 @@
-## Linked issue
-
-Closes #
-
 ## Summary
 
 <!-- What changed and why? -->
@@ -12,35 +8,30 @@ Closes #
 
 ## Validation performed
 
-<!-- Record exact commands and zero-failure results. -->
+<!-- Record exact commands and results. -->
 
 ## Runtime or device evidence
 
-<!-- Record runtime, export, device, browser, engine, or network evidence. Write "Not applicable" only when genuinely irrelevant. -->
+<!-- Record runtime, export, device, browser, engine, or network evidence when relevant. -->
 
 ## Screenshots for visual changes
 
-<!-- Attach fresh screenshots or state "No visual changes". -->
+<!-- Attach current screenshots or state "No visual changes". -->
 
-## Git LFS impact
+## External files and Git LFS
 
-<!-- List new or changed LFS objects and estimated storage delta, or state "None". -->
-
-## Release-note category
-
-<!-- Feature, Fix, Polish, Documentation, Maintenance, Release, or No release note. -->
+<!-- List Drive resources used, committed binary assets, LFS objects, and estimated storage impact, or state "None". -->
 
 ## Known limitations
 
-<!-- State exact remaining limitations. Do not write "None" unless all relevant boundaries were directly verified. -->
+<!-- State exact remaining limitations. -->
 
 ## Review checklist
 
 - [ ] I reviewed the complete **Files changed** diff.
-- [ ] Every review thread is resolved.
-- [ ] The linked issue and PR labels are correct.
-- [ ] Required local validation completed successfully.
-- [ ] Runtime/device evidence is attached when required.
-- [ ] Visual changes include current screenshots.
-- [ ] Git LFS impact is documented.
+- [ ] Relevant validation completed successfully.
+- [ ] Runtime or device evidence is included when required.
+- [ ] Visual changes include current screenshots or renders.
+- [ ] External files and Git LFS impact are documented.
+- [ ] No secrets, caches, generated junk, or unrelated files were added.
 - [ ] The head commit has not changed since final verification.

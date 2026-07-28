@@ -1,0 +1,73 @@
+name: Bug report
+description: Report a reproducible defect in one Bjs-Projects repository.
+title: "bug: "
+labels:
+  - type:bug
+  - status:ready
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Provide exact, reproducible evidence. Do not include credentials, tokens, private keys, or personal data.
+  - type: input
+    id: repository
+    attributes:
+      label: Repository
+      description: Which Bjs-Projects repository is affected?
+      placeholder: Bjs-Projects/example-repository
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      description: Tag, release, branch, or commit SHA where the defect occurs.
+    validations:
+      required: true
+  - type: textarea
+    id: summary
+    attributes:
+      label: Defect summary
+      description: What is wrong?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction steps
+      description: Provide the shortest reliable sequence that reproduces the defect.
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual result and evidence
+      description: Include exact errors, logs, screenshots, or recordings where relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, device, engine/runtime, tool versions, and other relevant configuration.
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Submission checks
+      options:
+        - label: I searched existing issues for this defect.
+          required: true
+        - label: I removed secrets and personal data from the report.
+          required: true

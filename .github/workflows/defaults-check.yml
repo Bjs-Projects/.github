@@ -9,14 +9,12 @@ on:
     paths:
       - ".github/PULL_REQUEST_TEMPLATE.md"
       - ".github/workflows/defaults-check.yml"
-      - ".chatgpt/CHECKPOINT.md"
       - "workflow-templates/**"
       - "scripts/validate_defaults.py"
   pull_request:
     paths:
       - ".github/PULL_REQUEST_TEMPLATE.md"
       - ".github/workflows/defaults-check.yml"
-      - ".chatgpt/CHECKPOINT.md"
       - "workflow-templates/**"
       - "scripts/validate_defaults.py"
   workflow_dispatch:

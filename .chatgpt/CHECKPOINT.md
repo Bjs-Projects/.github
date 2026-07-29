@@ -10,37 +10,46 @@ execution_surface: chatgpt-web
 local_checkout: unavailable
 worktree_path: not-applicable
 started_utc: 2026-07-29T19:46:00Z
-updated_utc: 2026-07-29T19:46:00Z
-status: active
+updated_utc: 2026-07-29T20:24:00Z
+status: validation
 ---
 
 # Task
 
 ## Requested outcome
 
-Provide organization-owned workflow defaults that enforce immutable action pins, Git LFS object checks, file-size guards, least privilege, and clear tool evidence without modifying project repositories.
+Provide organization-owned workflow defaults that enforce immutable Action pins, real Git LFS object checks, file-size guards, least privilege, and clear capability evidence without modifying project repositories.
 
 ## Acceptance criteria
 
-- [ ] Workflow template exists with pinned actions and real LFS object validation.
-- [ ] Template metadata is valid.
-- [ ] Organization defaults repository validates its own templates.
-- [ ] Pull request template captures tools used and unavailable checks.
+- [x] Workflow template exists with pinned Actions and real LFS object validation.
+- [x] Template metadata is valid by the committed validator contract.
+- [x] Organization defaults repository validates its own templates through a hosted workflow.
+- [x] Pull request template captures capabilities used, unavailable checks, LFS pointer/object evidence, and releases.
+- [ ] Hosted validation passes on the final branch head.
 
-## Tools and capabilities
+## Editable scope
 
-- GitHub connector for all repository writes and readback.
-- GitHub Actions for hosted YAML/template validation.
-- Web for current official workflow-template and reusable-workflow requirements.
+- Changed: `Bjs-Projects/.github`.
+- Read-only references: `Bjs-Projects/docs` and registered project workflows.
+
+## Capabilities used
+
+- GitHub connector: exact repository reads, branch creation, SHA-safe writes, readback, pull request and CI operations.
+- GitHub Actions: hosted validation of the public organization defaults repository.
+- Web: current official GitHub workflow-template metadata and availability requirements, Action releases, and Git LFS release/hash verification.
+- Local authenticated checkout and linked worktree: unavailable; not claimed.
 
 ## Completed
 
-- Audited current organization PR template and project workflow patterns.
+- Added `workflow-templates/bjs-repository-contract.yml` with immutable Action pins, verified Git LFS 3.7.1 installation, LFS pull/hash/fsck, submodules, regular-blob size gate, and Action-pin gate.
+- Added matching workflow-template metadata.
+- Added `scripts/validate_defaults.py` and `.github/workflows/defaults-check.yml`.
+- Expanded the inherited pull request template with capability and evidence sections.
 
 ## Pending
 
-- Add hardened workflow template and self-validation.
-- Run hosted checks and integrate.
+- Open pull request, inspect hosted validation, fix failures, remove this branch-only checkpoint, merge, and verify final `main`.
 
 ## Recovery notes
 

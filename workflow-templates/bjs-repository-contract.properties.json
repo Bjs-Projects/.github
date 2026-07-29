@@ -1,0 +1,8 @@
+{
+  "name": "Bjs Repository Contract",
+  "description": "Verify immutable Action pins, Git LFS objects, submodules, and repository size safety.",
+  "iconName": "octicon shield-check",
+  "categories": [
+    "Continuous integration"
+  ]
+}

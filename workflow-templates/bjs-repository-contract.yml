@@ -1,0 +1,164 @@
+name: Bjs Repository Contract
+
+on:
+  push:
+    branches: [ $default-branch ]
+  pull_request:
+    branches: [ $default-branch ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: repository-contract-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  repository-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Check out exact commit without LFS smudge
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          submodules: recursive
+          lfs: false
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.13"
+
+      - name: Install verified Git LFS 3.7.1
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 \
+            --output /tmp/git-lfs-linux-amd64-v3.7.1.tar.gz \
+            https://github.com/git-lfs/git-lfs/releases/download/v3.7.1/git-lfs-linux-amd64-v3.7.1.tar.gz
+          echo "1c0b6ee5200ca708c5cebebb18fdeb0e1c98f1af5c1a9cba205a4c0ab5a5ec08  /tmp/git-lfs-linux-amd64-v3.7.1.tar.gz" \
+            | sha256sum --check --strict
+          tar -xzf /tmp/git-lfs-linux-amd64-v3.7.1.tar.gz -C /tmp
+          sudo /tmp/git-lfs-3.7.1/install.sh
+          git lfs version
+
+      - name: Materialize and verify root Git LFS objects
+        shell: bash
+        run: |
+          set -euo pipefail
+          git lfs install --local
+          git lfs pull
+          git lfs fsck
+          python - <<'PY'
+          from __future__ import annotations
+
+          import hashlib
+          import pathlib
+          import re
+          import subprocess
+
+          pointer_re = re.compile(
+              r"\Aversion https://git-lfs\.github\.com/spec/v1\n"
+              r"oid sha256:([0-9a-f]{64})\n"
+              r"size ([1-9][0-9]*)\n?\Z"
+          )
+          paths = subprocess.check_output(
+              ["git", "lfs", "ls-files", "--name-only"], text=True
+          ).splitlines()
+          for raw_path in paths:
+              path = pathlib.Path(raw_path)
+              pointer = subprocess.check_output(
+                  ["git", "show", f"HEAD:{path.as_posix()}"], text=True
+              )
+              match = pointer_re.fullmatch(pointer)
+              if not match:
+                  raise SystemExit(f"invalid Git LFS pointer: {path}")
+              expected_oid = match.group(1)
+              expected_size = int(match.group(2))
+              data = path.read_bytes()
+              actual_oid = hashlib.sha256(data).hexdigest()
+              if len(data) != expected_size:
+                  raise SystemExit(
+                      f"Git LFS size mismatch for {path}: {len(data)} != {expected_size}"
+                  )
+              if actual_oid != expected_oid:
+                  raise SystemExit(
+                      f"Git LFS SHA-256 mismatch for {path}: {actual_oid} != {expected_oid}"
+                  )
+              print(f"verified LFS object {path} {expected_oid} {expected_size}")
+          PY
+
+      - name: Verify submodule Git LFS objects
+        shell: bash
+        run: |
+          set -euo pipefail
+          git submodule foreach --recursive '
+            git lfs install --local &&
+            git lfs pull &&
+            git lfs fsck
+          '
+
+      - name: Reject oversized ordinary Git blobs
+        shell: bash
+        run: |
+          python - <<'PY'
+          from __future__ import annotations
+
+          import subprocess
+
+          warning = 50 * 1024 * 1024
+          hard_limit = 100 * 1024 * 1024
+          failures: list[str] = []
+          output = subprocess.check_output(
+              ["git", "ls-tree", "-r", "-l", "HEAD"], text=True
+          )
+          for line in output.splitlines():
+              metadata, path = line.split("\t", 1)
+              mode, object_type, object_id, raw_size = metadata.split()
+              if object_type != "blob" or raw_size == "-":
+                  continue
+              size = int(raw_size)
+              if size > hard_limit:
+                  failures.append(f"{path}: {size} bytes exceeds 100 MiB")
+              elif size > warning:
+                  print(f"warning: {path}: {size} bytes exceeds 50 MiB")
+          if failures:
+              raise SystemExit("oversized ordinary Git blobs:\n" + "\n".join(failures))
+          PY
+
+      - name: Require immutable external GitHub Action pins
+        shell: bash
+        run: |
+          python - <<'PY'
+          from __future__ import annotations
+
+          import pathlib
+          import re
+
+          full_sha = re.compile(r"^[0-9a-f]{40}$")
+          failures: list[str] = []
+          for workflow in sorted(pathlib.Path(".github/workflows").glob("*.y*ml")):
+              for number, line in enumerate(workflow.read_text(encoding="utf-8").splitlines(), 1):
+                  stripped = line.strip()
+                  if not stripped.startswith("uses:"):
+                      continue
+                  spec = stripped.removeprefix("uses:").split("#", 1)[0].strip()
+                  if spec.startswith("./"):
+                      continue
+                  if "@" not in spec:
+                      failures.append(f"{workflow}:{number}: missing Action ref")
+                      continue
+                  action, ref = spec.rsplit("@", 1)
+                  if not full_sha.fullmatch(ref):
+                      failures.append(f"{workflow}:{number}: mutable Action ref {action}@{ref}")
+
+          if failures:
+              raise SystemExit("immutable Action pin failures:\n" + "\n".join(failures))
+          PY
+
+      - name: Reject branch-local checkpoint on the default branch
+        if: github.ref_name == github.event.repository.default_branch
+        shell: bash
+        run: test ! -f .chatgpt/CHECKPOINT.md

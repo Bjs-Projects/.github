@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate inherited Bjs-Projects templates and workflow contract."""
+"""Validate the minimal inherited Bjs-Projects workflow defaults."""
 
 from __future__ import annotations
 
@@ -37,26 +37,32 @@ REQUIRED_TEMPLATE_SNIPPETS = (
     "actual_oid = hashlib.sha256(data).hexdigest()",
     "100 * 1024 * 1024",
     "Require immutable external GitHub Action pins",
-    "Reject branch-local checkpoint on the default branch",
 )
 
 REQUIRED_PR_HEADINGS = (
-    "## Editable scope",
-    "## Capabilities and tools used",
-    "## Unavailable, unnecessary, or failed capabilities",
-    "## Validation performed",
-    "## Runtime or device evidence",
-    "## Screenshots for visual changes",
-    "## External files and Git LFS",
-    "## Release and artifact evidence",
-    "## Known limitations",
-    "## Review checklist",
+    "## Requested result",
+    "## Current change summary",
+    "## Validation completed",
+    "## Remaining work",
+    "## Exact next action",
+    "## Final checklist",
+)
+
+REQUIRED_PR_CHECKS = (
+    "Every coherent change is committed and visible on the remote branch.",
+    "Required checks ran against the latest head commit.",
+    "External GitHub Actions are pinned to reviewed full commit SHAs.",
 )
 
 FORBIDDEN_PHRASES = (
+    ".chatgpt/CHECKPOINT.md",
+    "bjs-checkpoint-v",
+    "workspace ID",
+    "archive/YYYYMMDDTHHMMSSZ",
+    "GitHub App controller",
+    "nightly compliance",
     "connector-only",
     "only GitHub connector",
-    "pointer validation is object verification",
 )
 
 
@@ -114,11 +120,14 @@ def main() -> int:
     for heading in REQUIRED_PR_HEADINGS:
         if heading not in pr_template:
             errors.append(f"pull request template missing heading: {heading}")
+    for checklist_item in REQUIRED_PR_CHECKS:
+        if checklist_item not in pr_template:
+            errors.append(f"pull request template missing final check: {checklist_item}")
 
     policy_surface = "\n".join((template, workflow, pr_template))
     for phrase in FORBIDDEN_PHRASES:
         if phrase.lower() in policy_surface.lower():
-            errors.append(f"stale tool-exclusive phrase present: {phrase}")
+            errors.append(f"removed or tool-exclusive workflow concept present: {phrase}")
 
     try:
         metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
@@ -127,7 +136,8 @@ def main() -> int:
         metadata = {}
     if metadata.get("name") != "Bjs Repository Contract":
         errors.append("workflow template metadata has incorrect name")
-    if not isinstance(metadata.get("description"), str) or not metadata["description"].strip():
+    description = metadata.get("description")
+    if not isinstance(description, str) or not description.strip():
         errors.append("workflow template metadata requires description")
     icon_name = metadata.get("iconName")
     if not isinstance(icon_name, str) or not icon_name.startswith("octicon "):
@@ -140,6 +150,7 @@ def main() -> int:
         "name: Organization defaults check",
         f"uses: actions/checkout@{CHECKOUT_PIN} # v6.0.2",
         f"uses: actions/setup-python@{SETUP_PYTHON_PIN} # v6.2.0",
+        "python -m py_compile scripts/validate_defaults.py",
         "python scripts/validate_defaults.py",
     ):
         if snippet not in workflow:
@@ -151,7 +162,10 @@ def main() -> int:
             print(f"- {error}", file=sys.stderr)
         return 1
 
-    print("Organization defaults validation passed.")
+    print(
+        "Organization defaults validation passed: concise PR continuation, "
+        "repository integrity checks, and no duplicate checkpoint/controller mechanisms."
+    )
     return 0
 
 

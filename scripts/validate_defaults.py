@@ -102,7 +102,7 @@ def main() -> int:
     template = read_text(template_path, errors) if template_path.is_file() else ""
     workflow = read_text(workflow_path, errors) if workflow_path.is_file() else ""
     pr_template = read_text(pr_path, errors) if pr_path.is_file() else ""
-    script = read_text(Path(__file__), errors)
+    read_text(Path(__file__), errors)
 
     for path, text in ((template_path, template), (workflow_path, workflow)):
         validate_action_pins(path, text, errors)
@@ -115,9 +115,9 @@ def main() -> int:
         if heading not in pr_template:
             errors.append(f"pull request template missing heading: {heading}")
 
-    all_text = "\n".join((template, workflow, pr_template, script))
+    policy_surface = "\n".join((template, workflow, pr_template))
     for phrase in FORBIDDEN_PHRASES:
-        if phrase.lower() in all_text.lower():
+        if phrase.lower() in policy_surface.lower():
             errors.append(f"stale tool-exclusive phrase present: {phrase}")
 
     try:

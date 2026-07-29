@@ -1,58 +1,28 @@
-## Summary
+## Requested result
 
-<!-- What changed and why? -->
+<!-- What user-visible or repository result must this pull request deliver? -->
 
-## Editable scope
+## Current change summary
 
-<!-- List repositories and external systems changed. List related repositories inspected read-only. -->
+<!-- What is already committed to this branch? Keep this current as the task progresses. -->
 
-## Files and systems changed
+## Validation completed
 
-<!-- List affected files, modules, services, assets, workflows, releases, or deployments. -->
+<!-- List checks run against the latest head commit. State unavailable checks honestly. -->
 
-## Capabilities and tools used
+## Remaining work
 
-<!-- Record every materially useful capability used and the evidence it supplied: local worktree, Git/GitHub CLI, GitHub connector, Actions, web sources, Drive, runtime, device, browser, engine, database, or deployment tools. -->
+<!-- List only unfinished requirements. Use "None" when the pull request is ready. -->
 
-## Unavailable, unnecessary, or failed capabilities
+## Exact next action
 
-<!-- Record relevant capabilities that were unavailable, unnecessary, unauthorized, or failed. Do not claim checks that did not run. -->
+<!-- State the first action another chat or developer should take after interruption. -->
 
-## Validation performed
+## Final checklist
 
-<!-- Record exact commands, workflow runs, checks, commits, and results. Distinguish pre-existing failures. -->
-
-## Runtime or device evidence
-
-<!-- Record runtime, export, device, browser, engine, network, database, or deployment evidence when relevant. -->
-
-## Screenshots for visual changes
-
-<!-- Attach current screenshots or renders, or state "No visual changes". -->
-
-## External files and Git LFS
-
-<!-- List external resource IDs, committed binary assets, LFS pointer OIDs/sizes, actual object pull/hash/fsck evidence, and storage impact, or state "None". Pointer-only validation is not object verification. -->
-
-## Release and artifact evidence
-
-<!-- List tags, release assets, artifacts, downloaded sizes and SHA-256 verification, or state "None". -->
-
-## Known limitations
-
-<!-- State exact remaining limitations, including anything outside the editable scope. -->
-
-## Review checklist
-
-- [ ] I reviewed the complete **Files changed** diff.
-- [ ] Every changed repository and every read-only repository is identified.
-- [ ] Relevant capabilities were used together where each supplied distinct evidence.
-- [ ] Unavailable or failed checks are recorded without being described as passed.
-- [ ] Relevant validation completed successfully against the exact head commit.
-- [ ] Runtime or device evidence is included when required.
-- [ ] Visual changes include current screenshots or renders.
-- [ ] External files and Git LFS pointer/object evidence are documented separately.
-- [ ] Release and artifact downloads were hash-verified when applicable.
-- [ ] No secrets, caches, generated junk, continuation state, or unrelated files were added.
+- [ ] I reviewed the complete diff against the intended base.
+- [ ] Every coherent change is committed and visible on the remote branch.
+- [ ] Required checks ran against the latest head commit.
+- [ ] Required assets, Git LFS objects, submodules, releases, or deployments are published and verified when applicable.
+- [ ] No secrets, caches, generated junk, continuation files, or unrelated changes were added.
 - [ ] External GitHub Actions are pinned to reviewed full commit SHAs.
-- [ ] The head commit has not changed since final verification.

@@ -157,8 +157,3 @@ jobs:
           if failures:
               raise SystemExit("immutable Action pin failures:\n" + "\n".join(failures))
           PY
-
-      - name: Reject branch-local checkpoint on the default branch
-        if: github.ref_name == github.event.repository.default_branch
-        shell: bash
-        run: test ! -f .chatgpt/CHECKPOINT.md

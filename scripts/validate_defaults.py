@@ -1,76 +1,66 @@
 #!/usr/bin/env python3
-"""Validate quota-efficient inherited Bjs-Projects workflow defaults."""
+"""Validate the minimal ChatGPT Web organization bootstrap."""
 
 from __future__ import annotations
 
-import json
 import re
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+
 REQUIRED_PATHS = (
+    "CHATGPT_PROJECT_INSTRUCTIONS.md",
     ".github/PULL_REQUEST_TEMPLATE.md",
     ".github/workflows/defaults-check.yml",
+    "scripts/validate_defaults.py",
+)
+
+REMOVED_PATHS = (
     "workflow-templates/bjs-repository-contract.yml",
     "workflow-templates/bjs-repository-contract.properties.json",
-    "scripts/validate_defaults.py",
 )
 
 CHECKOUT_PIN = "de0fac2e4500dabe0009e67214ff5f5447ce83dd"
 SETUP_PYTHON_PIN = "a309ff8b426b58ec0e2a45f0f869d46889d02405"
-LFS_ARCHIVE_SHA256 = "1c0b6ee5200ca708c5cebebb18fdeb0e1c98f1af5c1a9cba205a4c0ab5a5ec08"
 FULL_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 USES_RE = re.compile(r"^\s*uses:\s*([^\s#]+)(?:\s+#\s*(.+))?$", re.MULTILINE)
-PUSH_TRIGGER_RE = re.compile(r"^\s{2}push:\s*$", re.MULTILINE)
-
-REQUIRED_TEMPLATE_SNIPPETS = (
-    "name: Bjs Repository Contract",
-    "pull_request:",
-    "branches: [ $default-branch ]",
-    "workflow_dispatch:",
-    "permissions:\n  contents: read",
-    "cancel-in-progress: true",
-    "submodules: recursive",
-    "lfs: false",
-    f"uses: actions/checkout@{CHECKOUT_PIN} # v6.0.2",
-    f"uses: actions/setup-python@{SETUP_PYTHON_PIN} # v6.2.0",
-    "git-lfs-linux-amd64-v3.7.1.tar.gz",
-    LFS_ARCHIVE_SHA256,
-    "git lfs pull",
-    "git lfs fsck",
-    "expected_oid = match.group(1)",
-    "actual_oid = hashlib.sha256(data).hexdigest()",
-    "50 * 1024 * 1024",
-    "100 * 1024 * 1024",
-    "Require immutable external GitHub Action pins",
+AUTOMATIC_EVENT_RE = re.compile(
+    r"^\s{2}(?:push|pull_request|pull_request_target|schedule|workflow_run|repository_dispatch):\s*$",
+    re.MULTILINE,
+)
+DANGEROUS_AUTOMATION_RE = re.compile(
+    r"(?:contents:\s*write|\bgit\s+(?:commit|push|update-ref)\b|\bgh\s+pr\s+create\b|create-pull-request@)",
+    re.IGNORECASE,
 )
 
 REQUIRED_PR_HEADINGS = (
     "## Requested result",
+    "## Repository and refs",
     "## Current change summary",
     "## Validation completed",
+    "## Unavailable validation",
     "## Remaining work",
     "## Exact next action",
     "## Final checklist",
 )
 
 REQUIRED_PR_CHECKS = (
+    "The GitHub connector verified the exact repository",
     "Every coherent change is committed and visible on the remote branch.",
-    "This pull request was opened when implementation was ready for validation",
-    "Required checks ran against the latest head commit.",
-    "External GitHub Actions are pinned to reviewed full commit SHAs.",
+    "Sandbox validation claims are limited to files and tools that were actually present and used.",
+    "GitHub Actions was not used for preservation",
+    "Any zero-step or no-log Actions failure is classified as infrastructure or quota failure",
 )
 
-FORBIDDEN_PHRASES = (
-    ".chatgpt/CHECKPOINT.md",
-    "bjs-checkpoint-v",
-    "workspace ID",
-    "archive/YYYYMMDDTHHMMSSZ",
-    "GitHub App controller",
-    "nightly compliance",
-    "connector-only",
-    "only GitHub connector",
+REQUIRED_BOOTSTRAP = (
+    "Repository: Bjs-Projects/REPOSITORY-NAME",
+    "the first repository operation must use the GitHub connector",
+    "read the live Bjs-Projects/docs/WORKFLOW.md from main",
+    "Never use another repository as temporary storage, runner, build host, or fallback.",
+    "Run sandbox checks only when the complete required files and tools are actually present.",
+    "GitHub Actions is manual-only supplementary validation.",
+    "A zero-step, no-log Actions failure is infrastructure or quota failure",
 )
 
 
@@ -102,38 +92,29 @@ def validate_action_pins(path: Path, text: str, errors: list[str]) -> None:
             errors.append(f"{path.relative_to(ROOT)}: Action pin lacks release comment: {spec}")
 
 
-def require_snippets(filename: str, text: str, snippets: tuple[str, ...], errors: list[str]) -> None:
+def require_snippets(name: str, text: str, snippets: tuple[str, ...], errors: list[str]) -> None:
     for snippet in snippets:
         if snippet not in text:
-            errors.append(f"{filename}: missing required snippet: {snippet}")
+            errors.append(f"{name}: missing required snippet: {snippet}")
 
 
 def main() -> int:
     errors: list[str] = []
+
     for name in REQUIRED_PATHS:
         if not (ROOT / name).is_file():
             errors.append(f"missing required path: {name}")
+    for name in REMOVED_PATHS:
+        if (ROOT / name).exists():
+            errors.append(f"obsolete workflow template remains: {name}")
 
-    template_path = ROOT / "workflow-templates/bjs-repository-contract.yml"
+    bootstrap = read_text(ROOT / "CHATGPT_PROJECT_INSTRUCTIONS.md", errors)
+    pr_template = read_text(ROOT / ".github/PULL_REQUEST_TEMPLATE.md", errors)
     workflow_path = ROOT / ".github/workflows/defaults-check.yml"
-    pr_path = ROOT / ".github/PULL_REQUEST_TEMPLATE.md"
-    metadata_path = ROOT / "workflow-templates/bjs-repository-contract.properties.json"
-
-    template = read_text(template_path, errors) if template_path.is_file() else ""
-    workflow = read_text(workflow_path, errors) if workflow_path.is_file() else ""
-    pr_template = read_text(pr_path, errors) if pr_path.is_file() else ""
+    workflow = read_text(workflow_path, errors)
     read_text(Path(__file__), errors)
 
-    for path, text in ((template_path, template), (workflow_path, workflow)):
-        validate_action_pins(path, text, errors)
-        if PUSH_TRIGGER_RE.search(text):
-            errors.append(
-                f"{path.relative_to(ROOT)}: push trigger is forbidden; preservation pushes must not run CI"
-            )
-        if '"work/**"' in text or '"recovery/**"' in text:
-            errors.append(f"{path.relative_to(ROOT)}: work/recovery branch CI trigger is forbidden")
-
-    require_snippets("repository contract template", template, REQUIRED_TEMPLATE_SNIPPETS, errors)
+    require_snippets("project instruction bootstrap", bootstrap, REQUIRED_BOOTSTRAP, errors)
     for heading in REQUIRED_PR_HEADINGS:
         if heading not in pr_template:
             errors.append(f"pull request template missing heading: {heading}")
@@ -141,17 +122,11 @@ def main() -> int:
         if checklist_item not in pr_template:
             errors.append(f"pull request template missing final check: {checklist_item}")
 
-    policy_surface = "\n".join((template, workflow, pr_template))
-    for phrase in FORBIDDEN_PHRASES:
-        if phrase.lower() in policy_surface.lower():
-            errors.append(f"removed or tool-exclusive workflow concept present: {phrase}")
-
     require_snippets(
         "defaults-check workflow",
         workflow,
         (
-            "name: Organization defaults check",
-            "pull_request:",
+            "name: Manual organization defaults check",
             "workflow_dispatch:",
             "permissions:\n  contents: read",
             "cancel-in-progress: true",
@@ -162,23 +137,11 @@ def main() -> int:
         ),
         errors,
     )
-
-    try:
-        metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
-    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
-        errors.append(f"workflow template metadata cannot be read: {exc}")
-        metadata = {}
-    if metadata.get("name") != "Bjs Repository Contract":
-        errors.append("workflow template metadata has incorrect name")
-    description = metadata.get("description")
-    if not isinstance(description, str) or not description.strip():
-        errors.append("workflow template metadata requires description")
-    icon_name = metadata.get("iconName")
-    if not isinstance(icon_name, str) or not icon_name.startswith("octicon "):
-        errors.append("workflow template metadata requires an Octicon iconName")
-    categories = metadata.get("categories")
-    if not isinstance(categories, list) or "Continuous integration" not in categories:
-        errors.append("workflow template metadata requires Continuous integration category")
+    if AUTOMATIC_EVENT_RE.search(workflow):
+        errors.append("defaults-check workflow contains an automatic trigger")
+    if DANGEROUS_AUTOMATION_RE.search(workflow):
+        errors.append("defaults-check workflow contains source-mutating automation")
+    validate_action_pins(workflow_path, workflow, errors)
 
     if errors:
         print("Organization defaults validation failed:", file=sys.stderr)
@@ -187,8 +150,8 @@ def main() -> int:
         return 1
 
     print(
-        "Organization defaults validation passed: pull-request-only CI, concise validation-gate PRs, "
-        "repository integrity checks, and no work-branch or duplicate post-merge validation triggers."
+        "Organization defaults validation passed: minimal connector-first bootstrap, sandbox-realistic "
+        "claims, manual-only read-only Actions, and no copied repository-contract workflow."
     )
     return 0
 

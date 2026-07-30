@@ -1,16 +1,6 @@
 name: Organization defaults check
 
 on:
-  push:
-    branches:
-      - main
-      - "work/**"
-      - "recovery/**"
-    paths:
-      - ".github/PULL_REQUEST_TEMPLATE.md"
-      - ".github/workflows/defaults-check.yml"
-      - "workflow-templates/**"
-      - "scripts/validate_defaults.py"
   pull_request:
     paths:
       - ".github/PULL_REQUEST_TEMPLATE.md"
@@ -33,8 +23,6 @@ jobs:
     steps:
       - name: Check out exact commit
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0

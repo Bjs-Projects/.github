@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the minimal inherited Bjs-Projects workflow defaults."""
+"""Validate quota-efficient inherited Bjs-Projects workflow defaults."""
 
 from __future__ import annotations
 
@@ -22,19 +22,26 @@ SETUP_PYTHON_PIN = "a309ff8b426b58ec0e2a45f0f869d46889d02405"
 LFS_ARCHIVE_SHA256 = "1c0b6ee5200ca708c5cebebb18fdeb0e1c98f1af5c1a9cba205a4c0ab5a5ec08"
 FULL_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 USES_RE = re.compile(r"^\s*uses:\s*([^\s#]+)(?:\s+#\s*(.+))?$", re.MULTILINE)
+PUSH_TRIGGER_RE = re.compile(r"^\s{2}push:\s*$", re.MULTILINE)
 
 REQUIRED_TEMPLATE_SNIPPETS = (
     "name: Bjs Repository Contract",
+    "pull_request:",
     "branches: [ $default-branch ]",
+    "workflow_dispatch:",
     "permissions:\n  contents: read",
+    "cancel-in-progress: true",
     "submodules: recursive",
     "lfs: false",
+    f"uses: actions/checkout@{CHECKOUT_PIN} # v6.0.2",
+    f"uses: actions/setup-python@{SETUP_PYTHON_PIN} # v6.2.0",
     "git-lfs-linux-amd64-v3.7.1.tar.gz",
     LFS_ARCHIVE_SHA256,
     "git lfs pull",
     "git lfs fsck",
     "expected_oid = match.group(1)",
     "actual_oid = hashlib.sha256(data).hexdigest()",
+    "50 * 1024 * 1024",
     "100 * 1024 * 1024",
     "Require immutable external GitHub Action pins",
 )
@@ -50,6 +57,7 @@ REQUIRED_PR_HEADINGS = (
 
 REQUIRED_PR_CHECKS = (
     "Every coherent change is committed and visible on the remote branch.",
+    "This pull request was opened when implementation was ready for validation",
     "Required checks ran against the latest head commit.",
     "External GitHub Actions are pinned to reviewed full commit SHAs.",
 )
@@ -94,6 +102,12 @@ def validate_action_pins(path: Path, text: str, errors: list[str]) -> None:
             errors.append(f"{path.relative_to(ROOT)}: Action pin lacks release comment: {spec}")
 
 
+def require_snippets(filename: str, text: str, snippets: tuple[str, ...], errors: list[str]) -> None:
+    for snippet in snippets:
+        if snippet not in text:
+            errors.append(f"{filename}: missing required snippet: {snippet}")
+
+
 def main() -> int:
     errors: list[str] = []
     for name in REQUIRED_PATHS:
@@ -112,11 +126,14 @@ def main() -> int:
 
     for path, text in ((template_path, template), (workflow_path, workflow)):
         validate_action_pins(path, text, errors)
+        if PUSH_TRIGGER_RE.search(text):
+            errors.append(
+                f"{path.relative_to(ROOT)}: push trigger is forbidden; preservation pushes must not run CI"
+            )
+        if '"work/**"' in text or '"recovery/**"' in text:
+            errors.append(f"{path.relative_to(ROOT)}: work/recovery branch CI trigger is forbidden")
 
-    for snippet in REQUIRED_TEMPLATE_SNIPPETS:
-        if snippet not in template:
-            errors.append(f"repository contract template missing: {snippet}")
-
+    require_snippets("repository contract template", template, REQUIRED_TEMPLATE_SNIPPETS, errors)
     for heading in REQUIRED_PR_HEADINGS:
         if heading not in pr_template:
             errors.append(f"pull request template missing heading: {heading}")
@@ -128,6 +145,23 @@ def main() -> int:
     for phrase in FORBIDDEN_PHRASES:
         if phrase.lower() in policy_surface.lower():
             errors.append(f"removed or tool-exclusive workflow concept present: {phrase}")
+
+    require_snippets(
+        "defaults-check workflow",
+        workflow,
+        (
+            "name: Organization defaults check",
+            "pull_request:",
+            "workflow_dispatch:",
+            "permissions:\n  contents: read",
+            "cancel-in-progress: true",
+            f"uses: actions/checkout@{CHECKOUT_PIN} # v6.0.2",
+            f"uses: actions/setup-python@{SETUP_PYTHON_PIN} # v6.2.0",
+            "python -m py_compile scripts/validate_defaults.py",
+            "python scripts/validate_defaults.py",
+        ),
+        errors,
+    )
 
     try:
         metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
@@ -146,16 +180,6 @@ def main() -> int:
     if not isinstance(categories, list) or "Continuous integration" not in categories:
         errors.append("workflow template metadata requires Continuous integration category")
 
-    for snippet in (
-        "name: Organization defaults check",
-        f"uses: actions/checkout@{CHECKOUT_PIN} # v6.0.2",
-        f"uses: actions/setup-python@{SETUP_PYTHON_PIN} # v6.2.0",
-        "python -m py_compile scripts/validate_defaults.py",
-        "python scripts/validate_defaults.py",
-    ):
-        if snippet not in workflow:
-            errors.append(f"defaults-check workflow missing: {snippet}")
-
     if errors:
         print("Organization defaults validation failed:", file=sys.stderr)
         for error in sorted(set(errors)):
@@ -163,8 +187,8 @@ def main() -> int:
         return 1
 
     print(
-        "Organization defaults validation passed: concise PR continuation, "
-        "repository integrity checks, and no duplicate checkpoint/controller mechanisms."
+        "Organization defaults validation passed: pull-request-only CI, concise validation-gate PRs, "
+        "repository integrity checks, and no work-branch or duplicate post-merge validation triggers."
     )
     return 0
 

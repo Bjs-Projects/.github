@@ -4,7 +4,7 @@
 
 ## Current change summary
 
-<!-- What is already committed to this branch? Keep this current as the task progresses. -->
+<!-- What is committed to this branch and ready for validation? -->
 
 ## Validation completed
 
@@ -22,6 +22,7 @@
 
 - [ ] I reviewed the complete diff against the intended base.
 - [ ] Every coherent change is committed and visible on the remote branch.
+- [ ] This pull request was opened when implementation was ready for validation, unless early review was explicitly required.
 - [ ] Required checks ran against the latest head commit.
 - [ ] Required assets, Git LFS objects, submodules, releases, or deployments are published and verified when applicable.
 - [ ] No secrets, caches, generated junk, continuation files, or unrelated changes were added.

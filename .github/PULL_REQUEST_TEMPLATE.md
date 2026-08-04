@@ -1,39 +1,42 @@
 ## Requested result
 
-<!-- What user-visible or repository result must this pull request deliver? -->
+<!-- State the concrete repository or user-facing result. -->
+
+## Delivery class
+
+<!-- Choose exactly one: release-required or release-exempt. Explain the repository evidence for the classification. -->
 
 ## Repository and refs
 
-<!-- Exact owner/repository, base SHA, and current head SHA. -->
+<!-- Exact owner/repository, base SHA, branch, and current head SHA. -->
 
-## Current change summary
+## Change summary
 
-<!-- What is committed to this branch and ready for review or integration? -->
+<!-- Summarize the complete change on this branch. -->
 
-## Validation completed
+## Verification performed
 
-<!-- List connector inspections and sandbox commands that actually ran against the latest head. -->
+<!-- List only commands, connector reads, builds, runtime checks, and inspections that actually ran against the current head. -->
 
-## Unavailable validation
+## Required delivery
 
-<!-- List checks that could not run because required files, tools, network, runtime, device, credentials, or quota were unavailable. Use "None" when complete. -->
+<!-- For release-exempt work, state "Integrated repository state". For release-required work, list the real expected artifacts and release verification. -->
 
-## Remaining work
+## External prerequisite
 
-<!-- List only unfinished requirements. Use "None" when ready to merge. -->
-
-## Exact next action
-
-<!-- State the first action another chat or developer should take after interruption. -->
+<!-- Use "None" unless one user-owned secret, credential, license, destructive authorization, irreducible subjective input, or genuinely impossible output remains after all valid paths were exhausted. -->
 
 ## Final checklist
 
-- [ ] The GitHub connector verified the exact repository before repository claims or mutations.
-- [ ] Matching open pull requests and remote work branches were inspected before creating this branch.
+- [ ] The live `Bjs-Projects/docs/WORKFLOW.md` was used as the sole process authority.
+- [ ] The repository root `AGENTS.md` matches the canonical project control file.
+- [ ] Repository-local files were used only for project facts, exact commands, architecture, state, acceptance criteria, and release outputs.
+- [ ] Matching pull requests and remote task branches were inspected before creating duplicate work.
 - [ ] Every coherent change is committed and visible on the remote branch.
-- [ ] Sandbox validation claims are limited to files and tools that were actually present and used.
-- [ ] GitHub Actions was not used for preservation, source generation, archive application, commits, pushes, or recovery.
-- [ ] Any zero-step or no-log Actions failure is classified as infrastructure or quota failure rather than a test failure.
 - [ ] The complete diff was reviewed against the intended base.
-- [ ] Required binary, Git LFS, runtime, release, or deployment evidence is present when essential to the requested result.
-- [ ] No secrets, caches, generated junk, continuation files, or unrelated changes were added.
+- [ ] Verification claims are limited to checks that actually ran.
+- [ ] Unavailable optional checks were not treated as universal completion blockers.
+- [ ] Release-required work includes the real consumer artifact and release evidence.
+- [ ] Release-exempt work does not create a ceremonial tag or empty release.
+- [ ] GitHub Actions was not run unless the current user request explicitly authorized it.
+- [ ] No unauthorized Google Drive write, secret, cache, generated junk, continuation file, or unrelated change was added.

@@ -30,6 +30,9 @@
 
 - [ ] The live `Bjs-Projects/docs/WORKFLOW.md` was used as the sole process authority.
 - [ ] The repository root `AGENTS.md` matches the canonical project control file.
+- [ ] The installed Superpowers plugin and every applicable Superpowers skill were used.
+- [ ] Live `Bjs-Projects/skills` `main`, `SKILLS_INDEX.md`, and every relevant unchanged `SKILL.md` were read.
+- [ ] No `.github/workflows` file, hosted workflow run, job, artifact, or runner was created or used.
 - [ ] Repository-local files were used only for project facts, exact commands, architecture, state, acceptance criteria, and release outputs.
 - [ ] Matching pull requests and remote task branches were inspected before creating duplicate work.
 - [ ] Every coherent change is committed and visible on the remote branch.
@@ -38,5 +41,4 @@
 - [ ] Unavailable optional checks were not treated as universal completion blockers.
 - [ ] Release-required work includes the real consumer artifact and release evidence.
 - [ ] Release-exempt work does not create a ceremonial tag or empty release.
-- [ ] GitHub Actions was not run unless the current user request explicitly authorized it.
 - [ ] No unauthorized Google Drive write, secret, cache, generated junk, continuation file, or unrelated change was added.

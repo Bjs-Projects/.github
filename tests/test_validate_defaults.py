@@ -52,13 +52,18 @@ class OrganizationDefaultsTests(unittest.TestCase):
         temporary, fixture = copy_fixture()
         self.addCleanup(temporary.cleanup)
         path = fixture / "CHATGPT_PROJECT_INSTRUCTIONS.md"
-        path.write_text(
-            path.read_text(encoding="utf-8").replace(
+        text = path.read_text(encoding="utf-8")
+        if "and every applicable Superpowers skill" in text:
+            text = text.replace(
+                "and every applicable Superpowers skill",
+                "then every applicable Superpowers skill",
+            )
+        else:
+            text = text.replace(
                 "then every applicable Superpowers skill",
                 "and every applicable Superpowers skill",
-            ),
-            encoding="utf-8",
-        )
+            )
+        path.write_text(text, encoding="utf-8")
         errors = validate_defaults(fixture)
         self.assertFalse(any("bootstrap" in error for error in errors), errors)
 

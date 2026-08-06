@@ -21,34 +21,33 @@ REMOVED_PATHS = (
     "workflow-templates/bjs-repository-contract.properties.json",
 )
 
-REQUIRED_PR_HEADINGS = (
-    "## Requested result",
-    "## Delivery class",
-    "## Repository and refs",
-    "## Change summary",
-    "## Verification performed",
-    "## Required delivery",
-    "## External prerequisite",
-    "## Final checklist",
-)
-
-REQUIRED_PR_CHECKS = (
-    "The live `Bjs-Projects/docs/WORKFLOW.md` was used as the sole process authority.",
-    "The installed Superpowers plugin and every applicable Superpowers skill were used.",
-    "Live `Bjs-Projects/skills` `main`, `SKILLS_INDEX.md`, and every relevant unchanged `SKILL.md` were read.",
-    "No `.github/workflows` file, hosted workflow run, job, artifact, or runner was created or used.",
-)
-
 REQUIRED_BOOTSTRAP = (
     "Repository: Bjs-Projects/REPOSITORY-NAME",
-    "make the first repository operation a live GitHub connector read",
+    "Before any response or action, invoke the installed Superpowers plugin's `using-superpowers` skill, then every applicable Superpowers skill.",
     "read the live `Bjs-Projects/docs/WORKFLOW.md` from `main`",
-    "follow it as the sole cross-project process",
-    "Invoke the installed Superpowers plugin's `using-superpowers` skill",
-    "Read live `Bjs-Projects/skills` `main`, inspect `SKILLS_INDEX.md`",
-    "Use the skills catalog and installed Superpowers plugin together; neither substitutes for the other.",
-    "Never create, modify, trigger, rerun, or rely on `.github/workflows`, hosted workflow runs, jobs, artifacts, or runners.",
+    "follow it as the sole Bjs-specific policy",
 )
+
+REQUIRED_PR_HEADINGS = (
+    "## Requested result",
+    "## Repository and refs",
+    "## Change summary",
+    "## Verification evidence",
+    "## Delivery",
+    "## Limitations",
+)
+
+MIRRORED_RULES = (
+    "SKILLS_INDEX.md",
+    ".github/workflows",
+    "Google Drive",
+    "release-required",
+    "release-exempt",
+    "expected-head",
+    "Final checklist",
+    "branch head",
+)
+
 
 def read_text(root: Path, relative: str, errors: list[str]) -> str:
     path = root / relative
@@ -59,15 +58,23 @@ def read_text(root: Path, relative: str, errors: list[str]) -> str:
         return ""
     if text and not text.endswith("\n"):
         errors.append(f"{relative}: missing final newline")
-    for number, line in enumerate(text.splitlines(), 1):
+    for line_number, line in enumerate(text.splitlines(), 1):
         if line.rstrip() != line:
-            errors.append(f"{relative}:{number}: trailing whitespace")
+            errors.append(f"{relative}:{line_number}: trailing whitespace")
     return text
+
 
 def require_snippets(name: str, text: str, snippets: tuple[str, ...], errors: list[str]) -> None:
     for snippet in snippets:
         if snippet not in text:
             errors.append(f"{name}: missing required snippet: {snippet}")
+
+
+def reject_mirrors(name: str, text: str, errors: list[str]) -> None:
+    for snippet in MIRRORED_RULES:
+        if snippet in text:
+            errors.append(f"{name}: mirrors central policy: {snippet}")
+
 
 def validate_defaults(root: Path = ROOT) -> list[str]:
     root = root.resolve()
@@ -83,9 +90,7 @@ def validate_defaults(root: Path = ROOT) -> list[str]:
     workflow_root = root / ".github" / "workflows"
     if workflow_root.exists():
         for path in sorted(item for item in workflow_root.rglob("*") if item.is_file()):
-            errors.append(
-                f"hosted GitHub workflow is prohibited: {path.relative_to(root)}"
-            )
+            errors.append(f"hosted GitHub workflow is prohibited: {path.relative_to(root)}")
 
     bootstrap = read_text(root, "CHATGPT_PROJECT_INSTRUCTIONS.md", errors)
     pr_template = read_text(root, ".github/PULL_REQUEST_TEMPLATE.md", errors)
@@ -94,9 +99,19 @@ def validate_defaults(root: Path = ROOT) -> list[str]:
 
     require_snippets("project instruction bootstrap", bootstrap, REQUIRED_BOOTSTRAP, errors)
     require_snippets("pull request template", pr_template, REQUIRED_PR_HEADINGS, errors)
-    require_snippets("pull request template", pr_template, REQUIRED_PR_CHECKS, errors)
+
+    if bootstrap.find("using-superpowers") >= bootstrap.find("docs/WORKFLOW.md"):
+        errors.append("project instruction bootstrap: using-superpowers must precede the central workflow read")
+
+    headings = tuple(line for line in pr_template.splitlines() if line.startswith("## "))
+    if headings != REQUIRED_PR_HEADINGS:
+        errors.append("pull request template: headings must equal the evidence-only canonical set")
+
+    reject_mirrors("project instruction bootstrap", bootstrap, errors)
+    reject_mirrors("pull request template", pr_template, errors)
 
     return sorted(set(errors))
+
 
 def main() -> int:
     errors = validate_defaults(ROOT)
@@ -107,10 +122,11 @@ def main() -> int:
         return 1
 
     print(
-        "Organization defaults validation passed: central workflow authority, "
-        "mandatory skills sources, and no hosted GitHub workflows."
+        "Organization defaults validation passed: minimal Superpowers-first bootstrap, "
+        "evidence-only pull-request template, and no hosted workflows."
     )
     return 0
+
 
 if __name__ == "__main__":
     raise SystemExit(main())
